@@ -1,9 +1,11 @@
 mod common;
 mod decode;
+mod error;
 mod list;
 mod store;
 
 pub use decode::*;
+pub use error::{Error, Result};
 pub use list::*;
 pub use store::*;
 

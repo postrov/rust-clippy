@@ -1,17 +1,10 @@
 use byteorder::{BigEndian, ByteOrder};
-use thiserror::Error;
 
 pub const MAX_SIZE: usize = 5 * 1_000_000; // 5MB
 pub const BUCKET_KEY: &[u8] = b"b";
 pub const FIELD_SEP: &str = "\t";
 
-#[derive(Error, Debug)]
-pub enum ClippyError {
-    #[error("db error: {0}")]
-    DbErr(String),
-    #[error("id error: {0}")]
-    IdErr(String),
-}
+use crate::{Error, Result};
 
 pub fn itob(v: u64) -> [u8; 8] {
     let mut b = [0u8; 8];
@@ -49,14 +42,14 @@ fn cut(s: &str, sep: char) -> (&str, &str, bool) {
     }
 }
 
-pub fn extract_id(input: String) -> Result<u64, ClippyError> {
+pub fn extract_id(input: String) -> Result<u64> {
     let (id_str, _, _) = cut(&input, '\t');
 
     if id_str.is_empty() {
-        return Err(ClippyError::IdErr("input not prefixed with id".to_string()));
+        return Err(Error::from("input not prefixed with id"));
     }
 
     id_str
-        .parse()
-        .map_err(|_| ClippyError::IdErr("converting id".to_string()))
+        .parse::<u64>()
+        .map_err(|_| Error::from("converting id"))
 }

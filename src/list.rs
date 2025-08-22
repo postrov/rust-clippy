@@ -1,6 +1,6 @@
+use crate::Result;
 use nut::DBBuilder;
 use std::{io::Write, path::Path};
-use thiserror::Error;
 
 use image::ImageReader;
 use std::io::Cursor;
@@ -44,9 +44,6 @@ fn preview(index: u64, data: &[u8], width: u64) -> String {
         .map(|img| (img.width(), img.height()));
 
     if let Some((w, h)) = dimensions {
-        // image::ImageFormat is not returned here, so we guess format from image data
-        // If you want format string, you'd have to separately guess it or use a different approach
-        // For simplicity, mark format as unknown
         return format!(
             "{}{}[[ binary data {} {} {}x{} ]]",
             index,
@@ -71,40 +68,26 @@ fn preview(index: u64, data: &[u8], width: u64) -> String {
     format!("{}{}{}", index, crate::common::FIELD_SEP, truncated)
 }
 
-#[derive(Error, Debug)]
-pub enum ListError {
-    #[error("opening db: {0}")]
-    OpenDb(#[source] nut::Error),
+pub fn list<W: Write>(db_path: &Path, mut out: W, preview_width: u64) -> Result<()> {
+    let db = DBBuilder::new(db_path).build().map_err(|_| "db init")?;
 
-    #[error("begin tx: {0}")]
-    BeginTx(#[source] nut::Error),
-
-    #[error("bucket not found")]
-    BucketNotFound,
-}
-
-pub fn list<W: Write>(db_path: &Path, mut out: W, preview_width: u64) -> Result<(), ListError> {
-    let db = DBBuilder::new(db_path).build().map_err(ListError::OpenDb)?;
-
-    let tx = db.begin_tx().map_err(ListError::BeginTx)?;
+    let tx = db.begin_tx().map_err(|_| "db begin tx")?;
 
     let bucket = tx
         .bucket(crate::common::BUCKET_KEY)
-        .map_err(|_| ListError::BucketNotFound)?;
+        .map_err(|_| "db bucket not found")?;
 
-    // TODO: error mapping instead of unwraps below
-    let c = bucket.cursor().unwrap();
-    let mut item = c.last().unwrap();
+    let c = bucket.cursor().map_err(|_| "db cursor")?;
+    let mut item = c.last().map_err(|_| "db cursor last")?;
     loop {
         if item.is_none() {
             break;
         }
-        let k = item.key.unwrap();
-        let v = item.value.unwrap();
-        out.write_all(preview(crate::common::btoi(k), v, preview_width).as_bytes())
-            .unwrap();
-        out.write_all("\n".as_bytes()).unwrap(); // FIXME
-        item = c.prev().unwrap();
+        let k = item.key.ok_or("db item no key")?;
+        let v = item.value.unwrap_or(&[]);
+        out.write_all(preview(crate::common::btoi(k), v, preview_width).as_bytes())?;
+        out.write_all("\n".as_bytes())?; // FIXME
+        item = c.prev().map_err(|_| "db cursor prev")?;
     }
 
     Ok(())

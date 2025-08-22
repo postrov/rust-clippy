@@ -1,13 +1,15 @@
 use clap::{Parser, Subcommand};
 use nut::DBBuilder;
-use rust_clippy::{decode, list, store};
+use rust_clippy::{Result, decode, list, store};
 use std::env;
 use std::path::PathBuf;
 
 #[allow(dead_code)]
-fn xxx() {
-    let db = DBBuilder::new("/home/pasza/tmp/boltdb").build().unwrap();
-    let tx = db.begin_tx().unwrap();
+fn xxx() -> Result<()> {
+    let db = DBBuilder::new("/home/pasza/tmp/boltdb")
+        .build()
+        .map_err(|_| "couldnt open DB")?;
+    let tx = db.begin_tx().map_err(|_| "couldnt start tx")?;
     // Get buckets:
     {
         // .buckets() available to conveniently retrieve all buckets keys
@@ -21,7 +23,7 @@ fn xxx() {
     }
 
     {
-        let bucket = tx.bucket(b"b").unwrap();
+        let bucket = tx.bucket(b"b").map_err(|_| "couldnt get bucket")?;
         let _ = bucket.for_each::<nut::Error>(Box::new(|k, v| {
             let empty = vec![];
             let v = v.unwrap_or(&empty);
@@ -35,17 +37,7 @@ fn xxx() {
         }));
     }
 
-    // {
-    //     // additionally there is .cursor() method
-    //     // that returns Cursor struct,
-    //     // which is able to iterate through bucket contents
-    //     let cursor = tx.cursor();
-
-    //     assert_eq!(
-    //         &cursor.first().unwrap().value.unwrap(),
-    //         &"flowers".as_bytes()
-    //     );
-    // }
+    Ok(())
 }
 
 #[derive(Parser)]
@@ -101,7 +93,7 @@ enum Commands {
     Version,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
     let cli = Cli::parse();
 
     // Get cache and config directories (equivalent to Go's os.UserCacheDir() and os.UserConfigDir())
