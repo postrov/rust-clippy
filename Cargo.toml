@@ -1,0 +1,13 @@
+[package]
+name = "rust-clippy"
+version = "0.1.0"
+edition = "2024"
+
+
+[dependencies]
+byteorder = { version = "1.5.0" }
+clap = { version = "4.5.45" }
+# nut = { version = "0.1.3", path = "/home/pasza/tmp/local_crates/nut" }
+nut = {version = "0.1.3", git = "https://github.com/postrov/nut", branch = "fix_cursor_prev"}
+thiserror = { version = "2.0.16" }
+image = "0.25.6"
