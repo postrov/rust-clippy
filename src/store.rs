@@ -80,50 +80,23 @@ pub fn store<R: Read>(
 
 // Trim the bucket length to max_items by deleting the oldest entries
 fn trim_length(bucket: &mut Bucket, max_items: u64) -> Result<()> {
-    // Count bucket items
-    let mut count = 0;
-    {
-        let c = bucket.cursor()?;
-        let mut item = c.first()?;
-        loop {
-            if item.is_none() {
-                break;
-            }
-            count += 1;
-            item = c.next()?;
+    let c = bucket.cursor()?;
+    let mut item = c.last()?;
+    let mut seen = 0;
+    let mut keys_to_remove = Vec::new();
+
+    while let Some(key) = item.key {
+        item = c.prev()?;
+        if seen < max_items {
+            seen += 1;
+            continue;
         }
-    }
-
-    if count <= max_items {
-        return Ok(());
-    }
-
-    let to_remove = count - max_items;
-    let mut removed = 0;
-    let mut keys_to_remove = Vec::with_capacity(to_remove.try_into().unwrap_or(0));
-
-    // bucket.cursor() returns items in key order, assuming numeric big-endian keys
-    {
-        let c = bucket.cursor()?;
-        let mut item = c.first()?;
-        loop {
-            if removed >= to_remove {
-                break;
-            }
-            if let Some(key) = item.key {
-                keys_to_remove.push(key.to_vec());
-            } else {
-                break;
-            }
-            removed += 1;
-            item = c.next()?;
-        }
+        keys_to_remove.push(key.to_vec());
     }
 
     for key in keys_to_remove.into_iter() {
         bucket.delete(&key)?;
     }
-
     Ok(())
 }
 

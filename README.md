@@ -7,4 +7,5 @@
 [x] Image format is not detected
 [ ] Decode uses '\t' instead of constant
 [ ] Delete commands are not implemented yet
-[ ] Trim length could be much simpler
+[x] Trim length could be much simpler
+
