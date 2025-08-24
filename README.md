@@ -7,5 +7,8 @@
 [x] Image format is not detected
 [x] Decode uses '\t' instead of constant
 [ ] Delete commands are not implemented yet
+  [x] Delete last
+  [ ] Delete query
+  [ ] Delete(stdin)
 [x] Trim length could be much simpler
 

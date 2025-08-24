@@ -1,44 +1,7 @@
 use clap::{Parser, Subcommand};
-use nut::DBBuilder;
-use rust_clippy::{Result, decode, list, store};
+use rust_clippy::{Result, decode, delete_last, list, store};
 use std::env;
 use std::path::PathBuf;
-
-#[allow(dead_code)]
-fn xxx() -> Result<()> {
-    let db = DBBuilder::new("/home/pasza/tmp/boltdb")
-        .build()
-        .map_err(|_| "couldnt open DB")?;
-    let tx = db.begin_tx().map_err(|_| "couldnt start tx")?;
-    // Get buckets:
-    {
-        // .buckets() available to conveniently retrieve all buckets keys
-        let bucket_names = tx.buckets(); // returns Vec<Vec<u8>>
-
-        // bucket key is any binary data, not only string
-        for b in bucket_names {
-            let s = String::from_utf8(b.clone());
-            println!("bucket name: {:?}, {:?}", b, s);
-        }
-    }
-
-    {
-        let bucket = tx.bucket(b"b").map_err(|_| "couldnt get bucket")?;
-        let _ = bucket.for_each::<nut::Error>(Box::new(|k, v| {
-            let empty = vec![];
-            let v = v.unwrap_or(&empty);
-            let value = if v.len() > 1000 {
-                "<snip>".to_owned()
-            } else {
-                String::from_utf8(v.to_vec()).expect("wtf")
-            };
-            println!("key: {:?}, value: {:?}", k, value);
-            Ok(())
-        }));
-    }
-
-    Ok(())
-}
 
 #[derive(Parser)]
 #[command(name = "cliphist")]
@@ -129,11 +92,10 @@ fn main() -> Result<()> {
     match cli.command {
         Commands::Store => match clipboard_state.as_str() {
             "sensitive" => {
-                println!("Store command: Clipboard state is sensitive, skipping storage");
+                // sensitive, skip storage
             }
             "clear" => {
-                println!("Store command: Clipboard state is clear, deleting last entry");
-                println!("  Would call: deleteLast({:?})", db_path);
+                let _ = delete_last(db_path.as_path());
             }
             _ => {
                 let res = store(

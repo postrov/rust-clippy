@@ -1,10 +1,12 @@
 mod common;
 mod decode;
+mod delete;
 mod error;
 mod list;
 mod store;
 
 pub use decode::*;
+pub use delete::*;
 pub use error::{Error, Result};
 pub use list::*;
 pub use store::*;
