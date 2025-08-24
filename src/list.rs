@@ -69,6 +69,7 @@ fn preview(index: u64, data: &[u8], width: u64) -> String {
 }
 
 pub fn list<W: Write>(db_path: &Path, mut out: W, preview_width: u64) -> Result<()> {
+    const NEWLINE_BYTES: &[u8] = "\n".as_bytes();
     let db = DBBuilder::new(db_path).build().map_err(|_| "db init")?;
 
     let tx = db.begin_tx().map_err(|_| "db begin tx")?;
@@ -86,7 +87,7 @@ pub fn list<W: Write>(db_path: &Path, mut out: W, preview_width: u64) -> Result<
         let k = item.key.ok_or("db item no key")?;
         let v = item.value.unwrap_or(&[]);
         out.write_all(preview(crate::common::btoi(k), v, preview_width).as_bytes())?;
-        out.write_all("\n".as_bytes())?; // FIXME
+        out.write_all(NEWLINE_BYTES)?;
         item = c.prev().map_err(|_| "db cursor prev")?;
     }
 

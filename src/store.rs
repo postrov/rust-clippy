@@ -55,7 +55,6 @@ pub fn store<R: Read>(
     if input.iter().all(|b| b.is_ascii_whitespace()) {
         return Ok(());
     }
-    // TODO: the above checks if trimmed is empty, we still want to trim the input though
 
     // Start a writable transaction
     let mut tx = db.begin_rw_tx()?;

@@ -2,7 +2,7 @@ use byteorder::{BigEndian, ByteOrder};
 
 pub const MAX_SIZE: usize = 5 * 1_000_000; // 5MB
 pub const BUCKET_KEY: &[u8] = b"b";
-pub const FIELD_SEP: &str = "\t";
+pub const FIELD_SEP: char = '\t';
 
 use crate::{Error, Result};
 
@@ -19,18 +19,6 @@ pub fn btoi(v: &[u8]) -> u64 {
 pub fn u64_to_be_bytes(n: u64) -> [u8; 8] {
     n.to_be_bytes()
 }
-
-// This one is cleaner, but fails if sep is not present
-// pub fn extract_id(input: String) -> Result<u64, ClippyError> {
-//     let id_str = input
-//         .split_once(FIELD_SEP)
-//         .map(|(id, _)| id)
-//         .ok_or(ClippyError::IdErr("input not prefixed with id".to_string()))?;
-//
-//     id_str
-//         .parse()
-//         .map_err(|_| ClippyError::IdErr("converting id".to_string()))
-// }
 
 fn cut(s: &str, sep: char) -> (&str, &str, bool) {
     if let Some(index) = s.find(sep) {
