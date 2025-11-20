@@ -1,4 +1,4 @@
-A pointless rust rewrite of [cliphist](https://github.com/sentriz/cliphist). Should be a drop in replacement for it in integration scripts fron cliphist contrib (e.g. `cliphist-rofi`).
+A pointless rust rewrite of [cliphist](https://github.com/sentriz/cliphist). Should be a drop in replacement for it in integration scripts from cliphist contrib (e.g. `cliphist-rofi`).
 
 ## Problems
 
