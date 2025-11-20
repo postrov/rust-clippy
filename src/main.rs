@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use rust_clippy::{Result, decode, delete_last, list, store};
 use std::env;
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 #[derive(Parser)]
 #[command(name = "cliphist")]
@@ -56,7 +57,7 @@ enum Commands {
     Version,
 }
 
-fn main() -> Result<()> {
+fn main() -> ExitCode {
     let cli = Cli::parse();
 
     // Get cache and config directories (equivalent to Go's os.UserCacheDir() and os.UserConfigDir())
@@ -89,16 +90,17 @@ fn main() -> Result<()> {
     let clipboard_state = env::var("CLIPBOARD_STATE").unwrap_or_default();
 
     // Match on the command (equivalent to Go's switch statement)
+    let mut res = Result::Err(rust_clippy::Error::from("x"));
     match cli.command {
         Commands::Store => match clipboard_state.as_str() {
             "sensitive" => {
                 // sensitive, skip storage
             }
             "clear" => {
-                let _ = delete_last(db_path.as_path());
+                _ = delete_last(db_path.as_path());
             }
             _ => {
-                let res = store(
+                res = store(
                     db_path.as_path(),
                     std::io::stdin(),
                     cli.max_dedupe_search,
@@ -111,14 +113,14 @@ fn main() -> Result<()> {
             }
         },
         Commands::List => {
-            let _ = list(
+            res = list(
                 db_path.as_path(),
                 std::io::stdout(),
                 cli.preview_width as u64,
             );
         }
         Commands::Decode { id } => {
-            let res = decode(db_path.as_path(), std::io::stdin(), std::io::stdout(), id);
+            res = decode(db_path.as_path(), std::io::stdin(), std::io::stdout(), id);
             // TODO: remove this eventually, perhaps different return code
             if res.is_err() {
                 println!("decode result: {:?}", res);
@@ -147,5 +149,5 @@ fn main() -> Result<()> {
         }
     }
 
-    Ok(())
+    ExitCode::from(if res.is_err() { 1 } else { 0 })
 }
